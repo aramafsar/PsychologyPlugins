@@ -1,0 +1,320 @@
+@font-face {
+  font-family: Vazirmatn;
+  src: url('../assets/fonts/Vazirmatn-Light.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+.rtl h1,.rtl h2,.rtl h3,.rtl h4,.rtl h5,.rtl h6,.rtl th,.rtl td,.rtl strong { 
+	font-family: Vazirmatn;
+}
+
+.rtl h2 {
+	color: red;
+}
+
+
+.rtl th {
+	font-weight:bold;
+}
+
+.rtl td {
+	padding-right:10px;
+	text-align:right;
+}
+.test_result {
+	font-family: Vazirmatn, Tahoma;
+    max-width: 1170px;
+    width: 100%;
+    margin: auto;
+	background:white!important;
+}
+#exam_result * {
+	font-family: Vazirmatn, Tahoma;
+}
+#exam_result h1 {
+	font-size: 48px;
+}
+#exam_result h3 {
+	font-size: 30px;
+}
+#exam_result h4 {
+	font-size: 28px;
+}
+#exam_result h5 {
+	font-size: 26px;
+} 
+
+#exam_result h6 {
+	font-size: 16px;
+	margin:15px;
+} 
+#exam_result p, span {
+	font-size: 14px;
+	
+} 
+
+/* psyco-tests settings start */
+.ExamManager {
+	max-width: 800px;
+	margin: 0 auto;
+	padding: 15px;
+	background-color: #f7f7f7;
+	border-radius: 8px;
+	box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.ExamManager {
+	margin-right:auto;
+	margin-left:auto;
+	font-size: 1.3rem;
+	/*border: 1px solid black;
+	width:50%;*/
+}
+
+.ExamManager input {
+	margin-top: 20px;
+	vertical-align:top;
+}
+
+.ExamManager label {
+	display: block;
+	width: 100%;
+	height: 75px;
+	line-height:50px;
+	
+}
+@media (max-width: 768px) { 
+	.ExamManager label {
+		display: block;
+		width: 100%;
+		height: 100px;
+		line-height: 50px;
+	}
+}
+
+.ExamManager label:hover {
+	background-color: #ccc;
+}
+
+.QuestionDescription {
+	font-weight:bold;	
+	min-height:3em
+	text-align:justify;
+}
+
+.button-holder {
+	width:50%;
+	display: flex; 
+	justify-content: center; 
+	align-items: center; 
+	margin: auto;
+	margin-top:10px;
+	
+}
+@media (max-width: 768px) {
+	.button-holder {
+		width: 100%;
+	}
+	.button-holder .button{
+		min-width: 80px!important;
+	}
+}
+
+
+.button-holder .button{
+	min-width: 105px;
+	margin-left:10px;
+	margin-right: 10px;
+	font-weight:bold;
+	background-color:#1346af;
+	color:#ffffff!important;
+	border-radius:10px;
+}
+.button-holder .button:hover {
+	background-color:#3a3a3a;
+}
+.psyco-scale-table
+{
+	width:100%;
+	margin-left:auto;
+	margin-right:auto;
+	border-collapse:collapse; 
+	height:38px;
+}
+
+.ExamManager div {
+	text-align:justify;
+}
+
+#ExamList button {
+
+}
+
+@media only screen and (max-width: 600px) 
+{
+	.psyco-scale-table
+	{
+		width:100%;	
+	}
+}
+
+/* psyco-tests settings end */
+
+
+	.woocommerce-MyAccount-navigation,  .woocommerce-MyAccount-content {
+		width: 100%;
+		float: none;
+	}
+	.woocommerce-MyAccount-navigation ul {
+		text-align: center;
+		border-bottom: 1px solid rgba (0,0,0,.05);
+	}
+
+	.woocommerce-MyAccount-navigation ul li {
+		display: inline-block;
+		border-left: 1px solid rgba (0,0,0,0, .05);
+		padding: 0 1em;
+		border-bottom: 0;;
+	}
+/*	Organization Filtering classes */
+    .TagFilter ul {
+		 padding:30;
+    }
+
+	#examinee_list table thead tr {
+		background-color: black;
+		color: white;
+	}
+	  
+	#examinee_list table {
+		width: 80vw;
+	}
+ 	
+	#examinee_list tr td:first-child {
+			text-align: center;
+	}
+	#examinee_list td:empty {
+		display: none;
+	}
+/* Consultant Assistant classes*/	 
+	#search_box {
+		width: 300px;
+	}
+	
+
+	#exam_result {
+		max-width:1170px; 
+		margin: auto;
+	}
+	#exam_result table {
+		border: 1px solid rgb(221, 221, 221);
+		border-collapse: collapse;
+	}
+	#exam_result h2 {
+		font-size: 20px;
+	}
+	#exam_result td {
+		font-size: 14px;
+		line-height:24px;
+		padding: 5px 10px 5px 10px;
+	}
+	#exam_result th {
+		font-size: 14px;
+		line-height:24px;
+		padding: 5px 10px 5px 10px;
+	}
+	#exam_result h6 {
+		font-size: 16px;
+	}
+	#exam_result h3 {
+		font-size: 30px;
+	}	
+	#exam_result strong {
+		font-size: 14px;
+		line-height:24px;
+		padding: 5px 10px 5px 10px;
+	}
+	#exam_result hr {
+		margin: 15px 0;
+		line-height:28px;
+	}
+	#exam_result table tr:first-child {
+		background-color:#cccccc;
+	}
+	* {
+		box-sizing:border-box;
+	}
+	
+	.ReportAnalysis{
+		margin-top: 30px;
+		margin-right: auto;
+		margin-left: auto;
+		margin-bottom:30px;
+		width: 90%;
+		padding: 20px;
+		  background-color: #fff;  
+		  box-shadow: 0 0 2px 1px #48abe0,
+			  0 0 4px 1px #ebecca,
+			  0 0 5px 4px #8a2be2,
+			  0 0 6px 5px #ff1493;
+	}
+	.ReportAnalysis p
+	{
+		width: 100%;
+	}
+	.ReportAnalysis span
+	{
+		font-weight:bolder;
+		color:red;
+	}
+
+/*	Organization Filtering classes */
+      .TagFilter ul {
+		 padding:30;
+		 color: red;
+      }
+
+	  #examinee_list table thead tr {
+		background-color: black;
+		color: white;
+	  }
+	  
+	  #examinee_list table {
+		width: 80vw;
+	  }
+/* MBTI Detail classes*/	  
+	#mbti_detail ul {
+		/* padding: 30px; */
+		all:revert!important;
+	}
+	
+	#mbti_detail li {
+		all:revert!important;
+	}
+	
+	#mbti_detail {
+		font-family: Vazirmatn;
+		font-size: 16px;
+		line-height:24px;
+		max-width: 1170px;
+		width: 80%;
+		margin: auto;
+	}
+
+	#mbti_detail p {
+		font-family: Vazirmatn;
+		font-size: 16px;
+		line-height:24px;
+	}
+
+	
+	#mbti_detail span {
+		font-weight: bold;
+	}
+	
+	.TicketingUsage table{
+		width:100%;
+		//border: 1px solid blue;
+	}

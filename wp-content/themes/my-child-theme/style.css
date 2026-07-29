@@ -1,0 +1,35 @@
+/*
+Theme Name: My Child Theme
+Template: woostify
+*/
+@font-face {
+  font-family: Vazirmatn;
+  src: url('assets/fonts/Vazirmatn-Light.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+h2,h3,h4,h5,h6 { 
+	font-family: Vazirmatn;
+	color: red;
+}
+
+
+
+
+	.woocommerce-MyAccount-navigation,  .woocommerce-MyAccount-content {
+		width: 100%;
+		float: none;
+	}
+	.woocommerce-MyAccount-navigation ul {
+		text-align: center;
+		border-bottom: 1px solid rgba (0,0,0,.05);
+	}
+
+	.woocommerce-MyAccount-navigation ul li {
+		display: inline-block;
+		border-left: 1px solid rgba (0,0,0,0, .05);
+		padding: 0 1em;
+		border-bottom: 0;;
+	}

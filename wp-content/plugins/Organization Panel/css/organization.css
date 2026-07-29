@@ -1,0 +1,26 @@
+h2 {
+	  font-family: Vazirmatn!important;
+	  color:red;
+}
+.TagFilter input{
+/*		  all:unset;*/
+  font-family: Arial; 
+  font-size: 20px; 
+  color: blue;
+
+}
+.TagFilter ul {
+ padding:30;
+}
+#examinee_list {
+	all:unset;
+}
+#examinee_list table thead tr {
+background-color: black;
+color: white;
+font-family:vazirmatn!important;
+}
+
+#examinee_list table {
+width: 95%;
+}
