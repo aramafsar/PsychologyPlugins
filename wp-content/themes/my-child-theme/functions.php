@@ -154,13 +154,6 @@ function CreateUser($phone, $username) {
 }
 
 
-function wpse_init_session() {
-    if ( ! session_id() ) {
-        session_start();
-    }
-}
-// Start session on init hook.
-add_action( 'init', 'wpse_init_session' );
 
 // Remove address fields in woocommerce billing page
 	
@@ -424,4 +417,596 @@ function adjust_cart_total_for_grouped_package( $cart ) {
 add_action( 'woocommerce_before_calculate_totals', 'adjust_cart_total_for_grouped_package', 10, 1 );
 
 */
-?>
+
+
+
+/**
+ * Normalize Iranian mobile number.
+ */
+function my_normalize_mobile_number($mobile_number) {
+
+    $mobile_number = preg_replace('/[^0-9+]/', '', $mobile_number);
+
+    // +989121234567 -> 09121234567
+    if (strpos($mobile_number, '+98') === 0) {
+        $mobile_number = '0' . substr($mobile_number, 3);
+    }
+
+    // 989121234567 -> 09121234567
+    elseif (strpos($mobile_number, '98') === 0) {
+        $mobile_number = '0' . substr($mobile_number, 2);
+    }
+
+    // 00989121234567 -> 09121234567
+    elseif (strpos($mobile_number, '0098') === 0) {
+        $mobile_number = '0' . substr($mobile_number, 4);
+    }
+
+    return $mobile_number;
+}
+
+
+/**
+ * Get transient key for SMS verification.
+ */
+function my_mobile_verification_key($mobile_number) {
+
+    return 'my_sms_code_' . md5($mobile_number);
+}
+
+
+/**
+ * Get transient key for verified mobile.
+ */
+function my_mobile_verified_key($mobile_number) {
+
+    return 'my_sms_verified_' . md5($mobile_number);
+}
+
+
+/**
+ * Find WooCommerce customer by billing_phone.
+ */
+function my_find_customer_by_mobile($mobile_number) {
+
+    $mobile_number = my_normalize_mobile_number($mobile_number);
+
+    $users = get_users([
+        'meta_key'   => 'billing_phone',
+        'meta_value' => $mobile_number,
+        'number'     => 1,
+        'fields'     => 'all',
+    ]);
+
+    if (!empty($users)) {
+        return $users[0];
+    }
+
+    return false;
+}
+
+function my_mobile_login_redirect() {
+
+    if ( ! empty( $_POST['redirect'] ) ) {
+        $redirect = wp_validate_redirect(
+            wp_unslash( $_POST['redirect'] ),
+            home_url( '/' )
+        );
+    } else {
+        $redirect = home_url( '/' );
+    }
+
+    wp_safe_redirect( $redirect );
+    exit;
+}
+/**
+ * Handle mobile login / registration.
+ */
+add_action('init', 'my_mobile_login_handler');
+
+function my_mobile_login_handler() {
+
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        return;
+    }
+
+    if (empty($_POST['next_step'])) {
+        return;
+    }
+
+    /*
+     * Security check.
+     */
+    if (
+        empty($_POST['woocommerce-login-nonce']) ||
+        !wp_verify_nonce(
+            sanitize_text_field(
+                wp_unslash($_POST['woocommerce-login-nonce'])
+            ),
+            'woocommerce-login'
+        )
+    ) {
+        return;
+    }
+
+    $next_step = sanitize_text_field(
+        wp_unslash($_POST['next_step'])
+    );
+
+
+    /*
+     * =========================================================
+     * STEP 1
+     * User entered mobile number.
+     * Send verification code.
+     * =========================================================
+     */
+    if ($next_step === 'verify_code') {
+
+        if (empty($_POST['mobile_number'])) {
+            wc_add_notice(
+                'لطفاً شماره موبایل خود را وارد کنید.',
+                'error'
+            );
+
+            return;
+        }
+
+        $mobile_number = my_normalize_mobile_number(
+            wp_unslash($_POST['mobile_number'])
+        );
+
+
+        /*
+         * Validate Iranian mobile number.
+         */
+        if (!preg_match('/^09[0-9]{9}$/', $mobile_number)) {
+
+            wc_add_notice(
+                'شماره موبایل وارد شده صحیح نیست.',
+                'error'
+            );
+
+            return;
+        }
+
+
+        /*
+         * Generate verification code.
+         */
+        $verification_code = wp_rand(10000, 99999);
+
+
+        /*
+         * Save code for 5 minutes.
+         */
+        set_transient(
+            my_mobile_verification_key($mobile_number),
+            (string) $verification_code,
+            5 * MINUTE_IN_SECONDS
+        );
+
+
+        /*
+         * Send SMS.
+         */
+        SendVerificationCode(
+            $mobile_number,
+            $verification_code
+        );
+
+        /*
+         * Nothing else to do here.
+         * The existing form will show the verification-code field.
+         */
+        return;
+    }
+
+
+    /*
+     * =========================================================
+     * STEP 2
+     * User entered verification code.
+     * =========================================================
+     */
+    if ($next_step === 'add_username') {
+
+        if (
+            empty($_POST['mobile_number']) ||
+            empty($_POST['verification_code'])
+        ) {
+            wc_add_notice(
+                'شماره موبایل و کد تایید الزامی است.',
+                'error'
+            );
+
+            return;
+        }
+
+
+        $mobile_number = my_normalize_mobile_number(
+            wp_unslash($_POST['mobile_number'])
+        );
+
+        $entered_code = sanitize_text_field(
+            wp_unslash($_POST['verification_code'])
+        );
+
+
+        /*
+         * Get saved verification code.
+         */
+        $saved_code = get_transient(
+            my_mobile_verification_key($mobile_number)
+        );
+
+
+        /*
+         * Code expired / doesn't exist.
+         */
+        if ($saved_code === false) {
+
+            wc_add_notice(
+                'کد تایید منقضی شده است. لطفاً دوباره درخواست کد کنید.',
+                'error'
+            );
+
+            return;
+        }
+
+
+        /*
+         * Check verification code.
+         */
+        if (!hash_equals(
+            (string) $saved_code,
+            (string) $entered_code
+        )) {
+
+            wc_add_notice(
+                'کد تایید وارد شده صحیح نیست.',
+                'error'
+            );
+
+            return;
+        }
+
+
+        /*
+         * Code is correct.
+         * Delete it so it cannot be reused.
+         */
+        delete_transient(
+            my_mobile_verification_key($mobile_number)
+        );
+
+
+        /*
+         * Find existing customer by WooCommerce billing_phone.
+         */
+        $user = my_find_customer_by_mobile($mobile_number);
+
+
+        /*
+         * =====================================================
+         * EXISTING USER
+         * Login immediately.
+         * =====================================================
+         */
+        if ($user !== false) {
+
+            /*
+             * Set current WordPress user.
+             */
+            wp_set_current_user($user->ID);
+
+
+            /*
+             * Set WordPress authentication cookie.
+             */
+            wp_set_auth_cookie(
+                $user->ID,
+                true
+            );
+
+
+            /*
+             * WooCommerce customer authentication/session.
+             */
+            if (function_exists('wc_set_customer_auth_cookie')) {
+                wc_set_customer_auth_cookie($user->ID);
+            }
+
+
+            /*
+             * Trigger normal WordPress login action.
+             */
+            do_action(
+                'wp_login',
+                $user->user_login,
+                $user
+            );
+
+
+            /*
+             * Redirect to WooCommerce My Account.
+             */
+			my_mobile_login_redirect();
+        }
+
+
+        /*
+         * =====================================================
+         * NEW USER
+         * Code is valid, but user doesn't exist.
+         *
+         * Mark mobile as verified.
+         * The existing form will now show username field.
+         * =====================================================
+         */
+        set_transient(
+            my_mobile_verified_key($mobile_number),
+            '1',
+            10 * MINUTE_IN_SECONDS
+        );
+
+        return;
+    }
+
+
+    /*
+     * =========================================================
+     * STEP 3
+     * New user entered username.
+     * =========================================================
+     */
+    if ($next_step === 'do_login') {
+
+        if (
+            empty($_POST['mobile_number']) ||
+            empty($_POST['username'])
+        ) {
+            wc_add_notice(
+                'شماره موبایل و نام کاربری الزامی است.',
+                'error'
+            );
+
+            return;
+        }
+
+
+        $mobile_number = my_normalize_mobile_number(
+            wp_unslash($_POST['mobile_number'])
+        );
+
+        $username = sanitize_user(
+            wp_unslash($_POST['username']),
+            true
+        );
+
+
+        /*
+         * Check that mobile number was actually verified.
+         */
+        $verified = get_transient(
+            my_mobile_verified_key($mobile_number)
+        );
+
+        if ($verified !== '1') {
+
+            wc_add_notice(
+                'لطفاً ابتدا شماره موبایل خود را تایید کنید.',
+                'error'
+            );
+
+            return;
+        }
+
+
+        /*
+         * Validate username.
+         *
+         * Only English letters and numbers and underscore.
+         */
+        if (
+            !preg_match('/^[A-Za-z][A-Za-z0-9_]*$/', $username)
+        ) {
+
+            wc_add_notice(
+                'نام کاربری باید با حروف انگلیسی شروع شود و فقط شامل حروف انگلیسی، اعداد و _ باشد.',
+                'error'
+            );
+
+            return;
+        }
+
+
+        /*
+         * Check username availability.
+         */
+        if (username_exists($username)) {
+
+            wc_add_notice(
+                'این نام کاربری قبلاً استفاده شده است.',
+                'error'
+            );
+
+            return;
+        }
+
+
+        /*
+         * Check again whether mobile already belongs to a user.
+         */
+        $existing_user = my_find_customer_by_mobile(
+            $mobile_number
+        );
+
+        if ($existing_user !== false) {
+
+            /*
+             * Someone already has this mobile number.
+             * Login instead of creating duplicate account.
+             */
+            delete_transient(
+                my_mobile_verified_key($mobile_number)
+            );
+
+            wp_set_current_user($existing_user->ID);
+
+            wp_set_auth_cookie(
+                $existing_user->ID,
+                true
+            );
+
+            if (function_exists('wc_set_customer_auth_cookie')) {
+                wc_set_customer_auth_cookie($existing_user->ID);
+            }
+
+            do_action(
+                'wp_login',
+                $existing_user->user_login,
+                $existing_user
+            );
+
+			my_mobile_login_redirect();
+        }
+
+
+        /*
+         * =====================================================
+         * Create new WordPress user.
+         * =====================================================
+         */
+
+        /*
+         * Generate a unique internal email address.
+         *
+         * WordPress requires an email for this approach.
+         */
+        $email = 'mobile_' .
+            preg_replace('/[^0-9]/', '', $mobile_number) .
+            '@' .
+            wp_parse_url(
+                home_url(),
+                PHP_URL_HOST
+            );
+
+
+        /*
+         * Generate random password.
+         *
+         * User does not need to know it because
+         * authentication is done using SMS.
+         */
+        $password = wp_generate_password(
+            32,
+            true,
+            true
+        );
+
+
+        /*
+         * Create user.
+         */
+        $user_id = wp_insert_user([
+            'user_login' => $username,
+            'user_pass'  => $password,
+            'user_email' => $email,
+            'role'       => 'customer',
+        ]);
+
+
+        /*
+         * Check creation error.
+         */
+        if (is_wp_error($user_id)) {
+
+            wc_add_notice(
+                'ایجاد حساب کاربری با خطا مواجه شد: ' .
+                $user_id->get_error_message(),
+                'error'
+            );
+
+            return;
+        }
+
+
+        /*
+         * Save WooCommerce billing phone.
+         */
+        update_user_meta(
+            $user_id,
+            'billing_phone',
+            $mobile_number
+        );
+
+
+        /*
+         * Also save it as shipping phone if desired.
+         */
+        update_user_meta(
+            $user_id,
+            'shipping_phone',
+            $mobile_number
+        );
+
+
+        /*
+         * Verification is no longer needed.
+         */
+        delete_transient(
+            my_mobile_verified_key($mobile_number)
+        );
+
+
+        /*
+         * =====================================================
+         * Login newly created user.
+         * =====================================================
+         */
+        $user = get_user_by(
+            'id',
+            $user_id
+        );
+
+        if (!$user) {
+            wc_add_notice(
+                'حساب ساخته شد اما ورود به حساب انجام نشد.',
+                'error'
+            );
+
+            return;
+        }
+
+
+        wp_set_current_user(
+            $user_id
+        );
+
+        wp_set_auth_cookie(
+            $user_id,
+            true
+        );
+
+
+        if (function_exists('wc_set_customer_auth_cookie')) {
+            wc_set_customer_auth_cookie($user_id);
+        }
+
+
+        do_action(
+            'wp_login',
+            $user->user_login,
+            $user
+        );
+
+
+        /*
+         * Redirect to My Account.
+         */
+		my_mobile_login_redirect();
+
+        exit;
+    }
+}
