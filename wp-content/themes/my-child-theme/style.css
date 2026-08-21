@@ -15,7 +15,22 @@ h2,h3,h4,h5,h6 {
 	color: red;
 }
 
+/* WooCommerce product grid */
+.wc-block-grid__products {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 24px !important;
+    list-style: none !important;
+    padding-left: 0 !important;
+    margin-left: 0 !important;
+}
 
+.wc-block-grid__product {
+    width: auto !important;
+    max-width: none !important;
+    margin: 0 !important;
+    list-style: none !important;
+}
 
 
 	.woocommerce-MyAccount-navigation,  .woocommerce-MyAccount-content {
@@ -33,3 +48,4 @@ h2,h3,h4,h5,h6 {
 		padding: 0 1em;
 		border-bottom: 0;;
 	}
+
