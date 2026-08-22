@@ -81,6 +81,81 @@ function remove_what_for_consultant ($html){
 	return null;
 }
 
+function callService($service_name, $params)
+{
+    // Shared MARIS service configuration
+    include plugin_dir_path(__FILE__) . 'wsdl.inc.php';
+
+    $merchant_code = '1BCF9EF3-04C1-48AE-8709-5B6138045D75';
+    // $merchant_code = 'E0157537-4535-4A65-81EB-EE98603FBB45'; // Dr. Sahebi Clinic
+
+    $params = array('merchant_code' => $merchant_code) + $params;
+
+    // Convert the shared SOAP/WSDL URL to the REST base URL
+    $rest_url = preg_replace('/\?WSDL$/i', '', $wsdl);
+    $rest_url .= '/' . $service_name;
+
+    $response = wp_remote_post(
+        $rest_url,
+        array(
+            'timeout' => 60,
+            'headers' => array(
+                'Content-Type' => 'application/json; charset=utf-8',
+                'Accept' => 'application/json',
+            ),
+            'body' => wp_json_encode($params),
+        )
+    );
+
+    if (is_wp_error($response)) {
+        echo 'Error: ' . $response->get_error_message();
+        return '';
+    }
+
+    $status_code = wp_remote_retrieve_response_code($response);
+    $body = wp_remote_retrieve_body($response);
+
+    if ($status_code < 200 || $status_code >= 300) {
+        echo '<p>REST API Error: ' . esc_html($status_code) . '</p>';
+        echo '<pre>' . esc_html($body) . '</pre>';
+        return '';
+    }
+
+    $result = json_decode($body, true);
+
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        echo '<p>Invalid JSON response:</p>';
+        echo '<pre>' . esc_html($body) . '</pre>';
+        return '';
+    }
+
+    // ASP.NET REST response
+    if (isset($result['d'])) {
+        $result = $result['d'];
+    }
+
+    // Keep compatibility with the old SOAP response
+    if (isset($result[$service_name . 'Result'])) {
+        $res = $result[$service_name . 'Result'];
+    } else {
+        $res = $result;
+    }
+
+    // Preserve existing consultant filtering
+    $restemp = $res;
+
+    if (!current_user_can("consultant_capability")) {
+        $ret = remove_what_for_consultant($restemp);
+
+        if ($ret !== null) {
+            $res = $ret;
+        }
+    }
+
+    return $res;
+}
+
+/*
 function callService ($service_name, $params)
 {
 	
@@ -100,15 +175,7 @@ function callService ($service_name, $params)
 	
 	
 	$params = array('merchant_code' => $merchant_code)+$params; 
-/*	
-	echo ('<br/>');
 
-	echo "<p>Service Name: $service_name </p>";
-	echo "<p>Parameters:";
-	print_r ($params);
-	echo "</p>";
-	wp_die();
-// */
 	$res = "";
 	$result = $client->call($service_name, $params);
 
@@ -143,6 +210,7 @@ function callService ($service_name, $params)
 	//show_var ($res, 'before returning $res2:');
 	return $res;
 }
+*/
 function get_exam_action($item_id, $item_id_row, &$action, &$exam_id)
 {
 	global $wpdb;
