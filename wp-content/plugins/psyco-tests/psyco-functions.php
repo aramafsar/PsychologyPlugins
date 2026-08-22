@@ -494,6 +494,7 @@ function show_tests($user_id){
 			} elseif ($get_next_question_sat) {
 				//show_var_dump ($params,'params');
 				$res = callService('GetNextQuestion', $params);
+				//show_var_dump ($res,'result');
 			}
 			if ($get_talent_profile)
 			{
@@ -590,7 +591,7 @@ function show_tests($user_id){
 					} elseif ($key == 'Answers') {
 						//var_dump ($value['Answer'][0]);
 
-						foreach ($value['Answer'] as $answer_item) {
+						foreach ($value as $answer_item) {
 							//	show_var_dump($answer_item, 'answer_item');
 							$checked = ($answer_item['AnsweredItemNo'] == $answer_item['ItemNo']) ? 'checked' : '';
 							$ans_desc = convert_to_utf8($answer_item['Description']);
